@@ -2,44 +2,46 @@
 
 ## 📌 Project Overview
 This project demonstrates how to **install and configure a LAMP stack** (Linux, Apache, MySQL, PHP) and **deploy a WordPress application** on an **AWS EC2 instance**.  
-It covers real-world server setup, database configuration, and troubleshooting commonly faced during deployment.
+The setup follows real-world practices including **secure database configuration**, **proper file permissions**, and **clean WordPress access using public IP**.
 
 ---
 
 ## 🧱 Tech Stack Used
 - **Linux** – Ubuntu 20.04 / 22.04  
 - **Apache** – Web Server  
-- **MySQL** – Database  
-- **PHP** – Backend scripting language  
+- **MySQL** – Database Server  
+- **PHP** – Backend Scripting Language  
 - **WordPress** – Content Management System (CMS)  
-- **AWS EC2** – Cloud virtual server  
+- **AWS EC2** – Cloud Virtual Machine  
 
 ---
 
-## 🎯 Project Objective
-- Set up a LAMP stack on AWS EC2
-- Deploy WordPress on Apache
-- Configure MySQL database for WordPress
-- Resolve database authentication issues
-- Make the website accessible via public IP
+## 🎯 Project Objectives
+- Install and configure a LAMP stack on AWS EC2
+- Deploy WordPress at the Apache document root
+- Secure MySQL using best practices
+- Apply correct file and directory permissions
+- Access WordPress directly via public IP
 
 ---
 
-## 🏗 Architecture
-User (Browser)  
-→ Apache Web Server  
-→ PHP (WordPress Application)  
-→ MySQL Database  
+## 🏗 Architecture (3-Tier Model)
 
-This follows a **3-tier architecture**:
-- Presentation Layer – Browser  
-- Application Layer – Apache + PHP  
-- Database Layer – MySQL  
+User (Browser)
+↓
+Apache Web Server (Port 80)
+↓
+PHP (WordPress Application)
+↓
+MySQL Database
+
+yaml
+Copy code
 
 ---
 
 ## ⚙️ Prerequisites
-- AWS account
+- AWS Account
 - EC2 instance with Ubuntu OS
 - Key pair (`.pem` file)
 - Security Group allowing:
@@ -54,119 +56,141 @@ This follows a **3-tier architecture**:
 ### 1️⃣ Connect to EC2 Instance
 ```bash
 ssh -i key.pem ubuntu@<public-ip>
-
 2️⃣ Update the System
+bash
+Copy code
 sudo apt update
-
-
 Purpose:
-Updates the package index to ensure the latest and secure packages are installed.
+Updates package index and ensures latest security patches.
 
 3️⃣ Install Apache Web Server
+bash
+Copy code
 sudo apt install apache2 -y
 sudo systemctl start apache2
 sudo systemctl enable apache2
-
-
 Purpose:
-Apache is used to serve web pages and handle HTTP requests.
+Apache handles incoming HTTP requests and serves web content.
 
 4️⃣ Install MySQL Database Server
+bash
+Copy code
 sudo apt install mysql-server -y
 sudo mysql_secure_installation
-
-
 Purpose:
 MySQL stores WordPress data such as posts, users, and site settings.
 
-5️⃣ Install PHP and Required Extensions
-sudo apt install php php-mysql php-cli php-curl php-gd php-xml php-mbstring -y
-sudo systemctl restart apache2
+Security actions performed:
 
+Disabled remote root login
 
-Purpose:
-WordPress is a PHP-based application and these extensions enable database connectivity, image handling, and API communication.
+Removed test database
 
-6️⃣ Install WordPress
-cd /var/www/html
-sudo wget https://wordpress.org/latest.tar.gz
-sudo tar -xzf latest.tar.gz
-sudo chown -R www-data:www-data wordpress
-sudo chmod -R 755 wordpress
+Improved password policy
 
-
-Purpose:
-Downloads the latest WordPress version, extracts it, and assigns proper permissions.
-
-7️⃣ Create WordPress Database and User
+5️⃣ Create WordPress Database and User
+bash
+Copy code
 sudo mysql
+sql
+Copy code
+CREATE DATABASE wordpress
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
 
-CREATE DATABASE wordpress;
-CREATE USER 'wpuser'@'localhost' IDENTIFIED BY 'StrongPassword123!';
+CREATE USER 'wpuser'@'localhost'
+IDENTIFIED WITH mysql_native_password
+BY 'StrongPassword123!';
+
 GRANT ALL PRIVILEGES ON wordpress.* TO 'wpuser'@'localhost';
 FLUSH PRIVILEGES;
 EXIT;
-
-
 Purpose:
-Creates a dedicated database and user for WordPress to securely store application data.
 
-8️⃣ Fix MySQL Authentication Issue
-ALTER USER 'wpuser'@'localhost'
-IDENTIFIED WITH mysql_native_password
-BY 'StrongPassword123!';
-FLUSH PRIVILEGES;
+Uses a dedicated database and user (least privilege principle)
 
+localhost restricts database access to the same server
 
+utf8mb4 supports full Unicode characters
+
+6️⃣ Install PHP and Required Extensions
+bash
+Copy code
+sudo apt install php php-mysql php-cli php-curl php-gd php-xml php-mbstring -y
+sudo systemctl restart apache2
 Purpose:
-Resolves WordPress database connection issues caused by MySQL authentication plugin mismatch.
+WordPress is a PHP-based application and requires these extensions for database connectivity, image handling, and API communication.
 
-9️⃣ Configure WordPress
-cd /var/www/html/wordpress
-sudo cp wp-config-sample.php wp-config.php
+7️⃣ Download and Extract WordPress
+bash
+Copy code
+cd /var/www/html
+sudo wget https://wordpress.org/latest.tar.gz
+sudo tar -xzf latest.tar.gz
+sudo rm latest.tar.gz
+8️⃣ Move WordPress to Apache Document Root
+bash
+Copy code
+sudo mv wordpress/* .
+sudo rm -rf wordpress
+Purpose:
+Allows WordPress to load directly from the public IP without /wordpress in the URL.
+
+9️⃣ Set Correct File Permissions
+bash
+Copy code
+sudo chown -R www-data:www-data /var/www/html
+sudo find /var/www/html -type d -exec chmod 755 {} \;
+sudo find /var/www/html -type f -exec chmod 644 {} \;
+Why these permissions?
+
+Apache runs as www-data
+
+Directories (755) allow traversal
+
+Files (644) prevent unauthorized modification
+
+Avoids insecure 777 permissions
+
+🔟 Configure WordPress
+bash
+Copy code
+cd /var/www/html
+cp wp-config-sample.php wp-config.php
 sudo nano wp-config.php
+Update database settings:
 
-
-Update database configuration:
-
+php
+Copy code
 define('DB_NAME', 'wordpress');
 define('DB_USER', 'wpuser');
 define('DB_PASSWORD', 'StrongPassword123!');
 define('DB_HOST', 'localhost');
+1️⃣1️⃣ Remove Apache Default Page
+bash
+Copy code
+sudo rm /var/www/html/index.html
+sudo systemctl restart apache2
+Purpose:
+Apache loads index.html before index.php. Removing it allows WordPress to load correctly.
 
+🌐 Access WordPress
+cpp
+Copy code
+http://<public-ip>
+WordPress login:
 
-Set correct ownership:
-
-sudo chown www-data:www-data wp-config.php
-
-🔟 Complete Installation via Browser
-
-Open the browser and navigate to:
-
-http://<public-ip>/wordpress
-
-
-Complete the WordPress installer by:
-
-Selecting language
-
-Entering database details
-
-Creating admin user
-
-Finishing installation
-
+pgsql
+Copy code
+http://<public-ip>
 🐞 Issues Faced & Resolution
 Issue
-
 Error establishing a database connection
 
 Root Cause
-
-MySQL authentication plugin mismatch (caching_sha2_password)
+MySQL default authentication plugin (caching_sha2_password) not compatible with WordPress
 
 Resolution
-
 Switched authentication to mysql_native_password
 
 Updated wp-config.php
@@ -174,7 +198,6 @@ Updated wp-config.php
 Restarted MySQL and Apache services
 
 ✅ Final Result
-
 LAMP stack installed successfully
 
 WordPress deployed on AWS EC2
@@ -183,14 +206,5 @@ Website accessible via public IP
 
 WordPress admin dashboard working correctly
 
-🧠 Key Learnings
-
-LAMP stack installation and configuration
-
-AWS EC2 networking and security groups
-
-MySQL authentication troubleshooting
-
-WordPress deployment in real environments
-
+Secure and production-ready setup
 
