@@ -1,0 +1,109 @@
+🐚 Shell Scripting Basics – Nginx Automation Script
+
+This repository demonstrates basic shell scripting by automating the installation and startup of Nginx on a Linux server (Ubuntu/Debian-based systems).
+
+Shell scripting is widely used in DevOps and Cloud environments to automate repetitive system administration tasks.
+
+📖 What is Shell Scripting?
+
+Shell scripting is the practice of writing programs that run inside a command-line shell to automate system and cloud operations.
+
+Instead of executing commands manually in the terminal, we write them once in a file and run the file whenever needed.
+
+Common use cases include:
+
+Server provisioning
+
+Installing packages
+
+AWS EC2 user-data scripts
+
+CI/CD automation
+
+Log cleanup
+
+Monitoring tasks
+
+🧠 What is Bash?
+
+Bash (Bourne Again Shell) is one of the most popular Unix/Linux shells and scripting languages.
+
+This project uses Bash as the interpreter.
+
+At the top of every script, we include:
+
+#!/bin/bash
+
+nginx.sh → Shell script to install and start Nginx
+
+README.md → Documentation for the project
+
+✍️ How to Write a Shell Script
+✅ Step 1: Create the Script File
+
+Create a new file in Linux:
+
+nano nginx.sh
+
+
+(or use vim / VS Code)
+
+✅ Step 2: Add the Shebang Line
+
+At the top of the file:
+
+#!/bin/bash
+
+✅ Step 3: Write Commands Inside
+
+Example script:
+
+#!/bin/bash
+
+sudo apt update
+sudo apt upgrade -y
+sudo apt install nginx -y
+
+sudo systemctl enable nginx
+sudo systemctl start nginx
+
+echo "Nginx installed and started successfully!"
+
+✅ Step 4: Save the File
+
+If using nano:
+
+CTRL + O → Enter  
+CTRL + X
+
+🔐 Giving Execute Permission
+
+Linux does not allow running files as programs unless they have execute permission.
+
+Grant permission using:
+
+chmod +x nginx.sh
+
+
+Check permissions:
+
+ls -l nginx.sh
+
+
+Expected output:
+
+-rwxr-xr-x nginx.sh
+
+
+The x means executable.
+
+▶️ How to Run the Script
+
+Run the script:
+
+./nginx.sh
+
+
+Or with sudo:
+
+sudo ./nginx.sh
