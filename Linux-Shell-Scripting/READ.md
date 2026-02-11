@@ -1,80 +1,34 @@
-# 🐧 Linux Shell Scripting – Basic Monitoring & File Check Scripts
+# 🐧 Linux Shell Scripting – Monitoring & Service Check Basics
 
-This repository contains simple Bash scripts created while learning Linux shell scripting fundamentals.
+This repository contains beginner-level Bash scripts created while learning Linux shell scripting and Linux system administration fundamentals.
 
-I practiced:
 
+The focus of this project is:
+
+
+- File and directory existence checking
 - Disk usage monitoring
 - CPU usage monitoring
-- File & directory existence checking
-- Conditional statements (`if`, `elif`, `else`, `fi`)
-- Command substitution `$(...)`
-- Pipes (`|`)
-- Text processing with `awk` and `sed`
+- Linux system service status checking
+- Conditional logic using `if`, `elif`, `else`, and `fi`
+- Using `awk`, `sed`, and pipes (`|`)
+- Command-line automation fundamentals
+
 
 ---
+
 
 ## 📁 Scripts in This Repository
 
 ---
 
-##  1️⃣ Disk Usage Check (`disk-check.sh`)
+## 1️⃣ File / Directory Check (`file-check.sh`)
 
-Checks root (`/`) disk usage and prints a warning if it is above 80%.
 
 ### 📜 Script:
 
+
 ```bash
-#!/bin/bash
-
-usage=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
-
-if [ "$usage" -gt 80 ]; then
-    echo "⚠ Disk usage is HIGH: $usage%"
-else
-    echo "Disk usage is normal: $usage%"
-fi
-
-▶ Run:
-chmod +x disk-check.sh
-./disk-check.sh
-
-2️⃣ CPU Usage Check (cpu-check.sh)
-
-Checks CPU usage and alerts if it is higher than 80%.
-
-📜 Script:
-#!/bin/bash
-
-
-cpu=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}')
-
-
-if (( $(echo "$cpu > 80" | bc -l) )); then
-    echo "⚠ CPU usage is HIGH: $cpu%"
-else
-    echo "CPU usage is normal: $cpu%"
-fi
-
-⚠ This script requires bc.
-Install if missing:
-
-sudo apt install bc
-▶ Run:
-chmod +x cpu-check.sh
-./cpu-check.sh
-
-3️⃣ File / Directory Check (file-check.sh)
-
-Checks whether a given path is:
-
-A file
-
-A directory
-
-Or does not exist
-
-📜 Script:
 #!/bin/bash
 
 
@@ -91,26 +45,99 @@ elif [ -d "$1" ]; then
 else
     echo "No such file or directory"
 fi
+
 ▶ Run:
 chmod +x file-check.sh
 ./file-check.sh /etc/passwd
 ./file-check.sh /etc
 ./file-check.sh testfile
 
+2️⃣ Disk Usage Check (disk-check.sh)
+
+📜 Script:
+#!/bin/bash
+
+
+usage=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
+
+
+if [ "$usage" -gt 80 ]; then
+    echo "⚠ Disk usage is HIGH: $usage%"
+else
+    echo "Disk usage is normal: $usage%"
+fi
+
+▶ Run:
+chmod +x disk-check.sh
+./disk-check.sh
+
+
+3️⃣ CPU Usage Check (cpu-check.sh)
+
+📜 Script:
+#!/bin/bash
+
+
+cpu=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}')
+
+
+if (( $(echo "$cpu > 80" | bc -l) )); then
+    echo "⚠ CPU usage is HIGH: $cpu%"
+else
+    echo "CPU usage is normal: $cpu%"
+fi
+
+⚠ Requires bc:
+
+sudo apt install bc
+
+▶ Run:
+chmod +x cpu-check.sh
+./cpu-check.sh
+
+4️⃣ System Service Check (service.sh)
+
+📜 Script:
+#!/bin/bash
+
+
+if [ -z "$1" ]; then
+    echo "Usage: $0 <service-name>"
+    exit 1
+fi
+
+
+service=$1
+
+
+if systemctl is-active --quiet "$service"; then
+    echo "✅ $service is RUNNING"
+else
+    echo "❌ $service is NOT running"
+fi
+
+▶ Run:
+chmod +x service.sh
+./service.sh nginx
+./service.sh sshd
+./service.sh apache2
+
 📚 What I Learned
 
-Through these scripts I practiced:
+Through this project I practiced:
 
-Creating Bash scripts
+Bash scripting fundamentals
 
-Using variables
+Using script arguments
 
-Reading command output into variables
+Creating variables
 
-Using if / elif / else
+Conditional logic
 
-Monitoring system resources
+Parsing Linux command output
 
-Working with Linux pipelines
+Working with pipelines
 
-Parsing output using awk and sed
+Checking system services using systemctl
+
+Monitoring Linux system resources
