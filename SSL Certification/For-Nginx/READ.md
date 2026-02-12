@@ -248,3 +248,74 @@ Sets up auto-renew
 Open:
 
 https://dovin.xyz
+
+🔄 1️⃣ Test Certificate Renewal
+
+Run this:
+
+sudo certbot renew --dry-run
+
+What this does:
+
+Simulates renewal
+
+Does NOT issue real certificate
+
+Checks if everything works
+
+If successful, you’ll see something like:
+
+Congratulations, all simulated renewals succeeded.
+
+If you see errors → tell me.
+
+⏰ 2️⃣ Check If Auto-Renew Timer Exists
+
+Ubuntu uses systemd timer, not cron.
+
+Run:
+
+sudo systemctl list-timers | grep certbot
+
+If working properly, you’ll see something like:
+
+certbot.timer    loaded active waiting
+
+That means:
+
+✔ Auto-renew is enabled
+✔ It runs twice daily
+✔ It renews only if expiry < 30 days
+
+🔍 3️⃣ Confirm Timer is Enabled
+
+Run:
+
+sudo systemctl status certbot.timer
+
+It should say:
+
+Active: active (waiting)
+
+If yes → you are done. Nothing else required.
+
+🛠 If Timer Is NOT Active
+
+Enable it manually:
+
+sudo systemctl enable certbot.timer
+sudo systemctl start certbot.timer
+
+Check again:
+
+sudo systemctl list-timers | grep certbot
+
+🧠 How Renewal Works Internally
+
+Every 12 hours:
+
+Certbot checks certificate expiry
+
+If less than 30 days left → renews
+
+Reloads Nginx automatically
