@@ -21,34 +21,26 @@ Install Docker Compose (plugin):
 
 
 FROM php:8.4-fpm
-
-# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git unzip curl libzip-dev \
     libonig-dev libxml2-dev \
     && docker-php-ext-install pdo_mysql mbstring xml zip bcmath
-
-# Install Xdebug for PHPUnit coverage
 RUN pecl install xdebug \
  && docker-php-ext-enable xdebug
-
-# Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 
-# Copy project files
 COPY . .
 
-# Install dependencies WITH dev (needed for phpunit)
 RUN composer install --optimize-autoloader
 
-# Ensure Laravel writable folders exist + permissions
 RUN mkdir -p storage bootstrap/cache \
  && chown -R www-data:www-data storage bootstrap/cache \
  && chmod -R 775 storage bootstrap/cache
 
 CMD ["php-fpm"]
+
 
 2, Nginx Configuration (nginx/default.conf)
 Handles HTTP requests.
@@ -83,6 +75,8 @@ server {
         deny all;
     }
 }
+
+
 
 3, Docker Compose (compose.yml)
 
@@ -141,6 +135,7 @@ networks:
 
 volumes:
   mysql-data:
+  
  
 4, Build & Run Containers
 
@@ -152,10 +147,13 @@ volumes:
      Check:
      docker ps
 
+     
+
 5, Install Laravel Dependencies
 
       Because code is mounted:
       docker-compose exec app composer install
+      
 
 6, Generate Laravel App Key
 
@@ -163,13 +161,16 @@ volumes:
       docker-compose exec app php artisan optimize:clear
       docker-compose exec app php artisan tinker
       
+      
 7, Import Database
 
       docker exec -i truelysell-mysql mysql -u truelyselluser -pStrongPassword123 truelysell < truelysell-laravel-new.sql
       
+      
 8, Run Migrations
 
       docker-compose exec app php artisan migrate
+
       
 9, Fix Permissions
 
@@ -178,8 +179,11 @@ volumes:
       docker-compose exec app mkdir -p storage/framework/views
       docker-compose exec app mkdir -p storage/logs
       docker-compose exec app chmod -R 775 storage bootstrap/cache
+      
 
 Check The Website Using Url
+
+
 
 Jenkins Installation
 
@@ -187,6 +191,7 @@ Install  JAVA:
      sudo apt update
      sudo apt install fontconfig openjdk-21-jre
       java -version
+      
       
 Install Jenkins:
      sudo wget -O /etc/apt/keyrings/jenkins-keyring.asc \
@@ -199,14 +204,16 @@ Install Jenkins:
 
 Access The Jenkins Web
 
+
 FIrst Time Admin Unlock Password Path:
       sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+      
 
 After That Install Suggested Plugins
 
+
 SonarQube Installation (Docker)
    docker run -d --name sonarqube -p 9001:9000 sonarqube:lts-community
-
 
 Access The Sonarqube In Web 
 
@@ -218,15 +225,14 @@ First Time Login Credential
 Generate Sonar Token
 SonarQube → Profile → Security → Generate Token  - - - - -  Copy The Token Paste In Notepad
 
+
+
 Jenkins → Add SonarQube
 Manage Jenkins → Plugins:
+
 Install:
 SonarQube Scanner
-
-
 Docker
-
-
 Git
 
 
@@ -255,15 +261,13 @@ Configure SonarQube Webhook
 
 Sonar Need The Node.js 
   Sonar analyzes:
+
 JavaScript
-
-
 CSS
-
-
 Vite frontend
 Install:
          sudo apt install nodejs npm -y
+
 
 
 Jenkins Permission Setup
@@ -271,11 +275,14 @@ Jenkins Permission Setup
 
 After That Restart The Jenkins
 
-Jenkins CI/CD Pipeline
-Automates deployment.
+
+                                      Jenkins CI/CD Pipeline       
+                                       Automates deployment.
 
      
 Final Jenkins Script
+
+
 
 pipeline {
  agent any
