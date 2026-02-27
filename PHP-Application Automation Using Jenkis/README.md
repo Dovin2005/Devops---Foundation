@@ -16,6 +16,7 @@ Add permission:
 Install Docker Compose (plugin):
    
            sudo apt install docker-compose-plugin -y
+           
 
 1, Dockerfile (PHP App)
 
@@ -43,7 +44,9 @@ CMD ["php-fpm"]
 
 
 2, Nginx Configuration (nginx/default.conf)
+
 Handles HTTP requests.
+
 server {
     listen 80;
     server_name _;
