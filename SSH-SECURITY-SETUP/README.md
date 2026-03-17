@@ -1,99 +1,116 @@
-🔐 Secure EC2 Access Using Per-User SSH Keys (No PEM Sharing)
-📌 Overview
-
-This guide explains how to securely give another user access to an AWS EC2 instance without sharing your .pem key, by:
-
-Creating a separate Linux user on EC2
-
-Generating SSH keys on the client user’s laptop
-
-Configuring SSH key-based authentication
-
-Applying correct Linux permissions
-
-Optionally granting sudo access
-
-This is a best practice approach used in real environments.
-
-🧩 STEP 1: Create a New Linux User on EC2
-
-You are already logged in as the ubuntu user.
-
-sudo adduser devuser
+                                    🔐 Secure EC2 Access Using Per-User SSH Keys (No PEM Sharing)
 
 
-Set a password (used only for su, not SSH)
+# Overview
 
-Press Enter for other prompts
+This guide explains how to securely provide access to an AWS EC2 instance **without sharing your `.pem` key**, by:
 
-✅ New user created
+              - Creating a separate Linux user on EC2
+              - Generating SSH keys on the client user's machine
+              - Configuring SSH key-based authentication
+              - Applying correct Linux permissions
+              - Optionally granting sudo access
 
-🧩 STEP 2: Create .ssh Directory for the User
-sudo mkdir /home/devuser/.ssh
-sudo chmod 700 /home/devuser/.ssh
+# Step 1: Create a New Linux User on EC2
 
+  Login to your EC2 instance as the default user (`ubuntu`):
 
-This directory will store SSH authorization files.
+        bash 
+           sudo adduser devuser
 
-🧩 STEP 3: Generate SSH Key on CLIENT User’s Laptop
+        Set a password (used only for su, not SSH login)
 
-Ask the other person to generate an SSH key on their own system.
+        Press Enter to skip optional fields
 
-On Linux / macOS
-ssh-keygen -t rsa -b 4096
+        User devuser is created
+        
 
-On Windows (PowerShell)
-ssh-keygen
+# Step 2: Create .ssh Directory for the User
 
+         sudo mkdir /home/devuser/.ssh
+         sudo chmod 700 /home/devuser/.ssh
 
-This generates two files:
+         This directory will store SSH authentication files.
+         
 
-id_rsa → ❌ PRIVATE KEY (must stay on client machine)
+# Step 3: Generate SSH Key on Client Machine
 
-id_rsa.pub → ✅ PUBLIC KEY (safe to share)
+  Ask the user to generate an SSH key on their own system.
 
-👉 Ask them to send ONLY:
+    Linux / macOS
+    
+       ssh-keygen -t rsa -b 4096
+       
+    Windows (PowerShell)
 
-id_rsa.pub
+      ssh-keygen
 
-🧩 STEP 4: Add the PUBLIC Key to the Server
+    This will generate:
 
-On the EC2 instance, open the authorized keys file:
+    id_rsa → ❌ Private Key (DO NOT SHARE)
 
-sudo nano /home/devuser/.ssh/authorized_keys
+    id_rsa.pub → ✅ Public Key (SAFE TO SHARE)
 
+    Ask the user to send only:
 
-Paste the entire public key in one line, then save and exit.
+    id_rsa.pub
 
-🧩 STEP 5: Fix Permissions (VERY IMPORTANT)
+    
+# Step 4: Add Public Key to EC2 Server
 
-Incorrect permissions will cause SSH to fail.
+  On the EC2 instance:
 
-sudo chmod 600 /home/devuser/.ssh/authorized_keys
-sudo chown -R devuser:devuser /home/devuser/.ssh
+         sudo nano /home/devuser/.ssh/authorized_keys
 
+         Paste the entire public key in one line
 
-Required permissions:
+   Save and exit
+   
 
-.ssh directory → 700
+# Step 5: Fix Permissions (⚠️ Critical Step)
 
-authorized_keys file → 600
+   Incorrect permissions will cause SSH authentication failure.
 
-🧩 STEP 6: (Optional) Grant Sudo Access
+        sudo chmod 600 /home/devuser/.ssh/authorized_keys
+        sudo chown -R devuser:devuser /home/devuser/.ssh
+        
+   Required Permissions:
+   
+   File/Directory	Permission
+   
+        .ssh directory	700
+        authorized_keys	600
 
-Only if the user needs admin privileges:
+        
+# Step 6: (Optional) Grant Sudo Access
 
-sudo usermod -aG sudo devuser
+  Only if administrative privileges are required:
 
+      sudo usermod -aG sudo devuser
 
-➡️ Skip this step if sudo access is not required (more secure).
+  Skip this step if not needed (more secure).
+  
 
-🧪 STEP 7: How the CLIENT User Connects (UPDATED)
+# Step 7: Client Connection Instructions
 
-From their own laptop, the user connects using their private key.
+  The client connects using their private key.
 
-If the private key is in the default location (~/.ssh/id_rsa):
-ssh devuser@<ec2-public-dns>
+      If using default key location:
+      
+           ssh devuser@<EC2_PUBLIC_IP>
+           
+      If using a custom key file:
+      
+           ssh -i /path/to/id_rsa devuser@<EC2_PUBLIC_IP>
 
-If the private key has a custom name or location:
-ssh -i id_rsa devuser@<ec2-public-dns>
+# Security Best Practices
+
+# Never share .pem or private keys
+
+# Always use per-user SSH access
+
+# Assign minimal required permissions
+
+# Remove access when no longer needed
+
+# Use IAM + SSM for advanced setups (optional)
