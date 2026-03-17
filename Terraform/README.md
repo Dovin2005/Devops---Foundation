@@ -1125,3 +1125,132 @@ Compute provisioning
 Database provisioning
 Storage integration
 IAM security configuration
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - Day 03 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+                         Auto Scaling + Load Balancer 
+1. Terraform Modular Architecture : 
+Before (Incorrect Design)
+All resources were inside one module (EC2)
+Mixed responsibilities:
+EC2
+Load Balancer
+Auto Scaling
+After (Correct Design)
+    modules/
+      ├── ec2/
+      ├── alb/
+      ├── autoscaling/
+      ├── network/
+      ├── rds/
+      ├── s3/
+      └── iam/
+
+2. EC2 Module Refactoring
+Changes Made
+Removed:
+Launch Template
+Auto Scaling Group
+Load Balancer
+Kept only:
+Security Group
+Final Role
+EC2 module → Only provides Security Group
+
+3. Application Load Balancer (ALB)
+Components Created
+Load Balancer
+Target Group
+Listener
+Key Learning
+ALB requires minimum 2 subnets in different AZs
+ALB routes traffic via Target Group
+4. Auto Scaling Group (ASG)
+Implemented
+Launch Template
+Auto Scaling Group
+
+Important Configuration
+target_group_arns → connects ALB to ASG
+health_check_type = "ELB"
+health_check_grace_period = 60
+
+Key Learning
+ASG does NOT automatically connect to ALB
+Must explicitly attach Target Group
+5. Dynamic EC2 Behavior : 
+Observation
+Instances created automatically by ASG
+Instances terminated automatically
+Key Learning : 
+ASG manages lifecycle of instances
+Manual EC2 is not needed
+6. Instance Naming : 
+Problem : 
+ASG instances had no Name tag
+Solution
+tag {
+  key                 = "Name"
+  value               = var.instance_name
+  propagate_at_launch = true
+}
+
+Key Learning
+ASG instances need tag block
+Cannot use count.index like normal EC2
+7. IAM Instance Profile
+Understanding
+iam_instance_profile ≠ Instance Name
+
+Purpose
+Grants EC2 permission to:
+S3
+CloudWatch
+AWS services
+8. Outputs in Terraform
+Learned
+Outputs are optional but important
+Used For
+ALB URL
+ASG name
+RDS endpoint
+Example
+output "alb_url" {
+  value = module.alb.alb_dns
+}
+9. Error Handling & Debugging : 
+Issues Faced
+Unsupported arguments
+Invalid index
+Missing variables
+Wrong module references
+Key Learning : 
+Always match:
+variables.tf
+main.tf
+outputs.tf
+10. Real AWS Architecture Built : 
+          User
+             ↓
+          Route53 (Domain)
+             ↓
+          ALB
+             ↓
+          Target Group
+             ↓
+          Auto Scaling Group
+             ↓
+          EC2 Instances (Nginx)
+
+Key Takeaways : 
+Separate modules = clean architecture
+ALB + ASG must be connected via Target Group
+Auto Scaling replaces manual EC2
+Tags are required for naming in ASG
+Terraform outputs improve usability
+Next Learning Plan : 
+✅ Add HTTPS (SSL with ACM)
+✅ Domain routing with Route53
+✅ CI/CD pipeline (Jenkins + Terraform)
+✅ Monitoring with CloudWatch
+
+- - - - - - - - - - - - - - - - - - - - - End of Day Learning 🚀 - - - - - - - - - - - - - - - - - - - - - - - - - - 
