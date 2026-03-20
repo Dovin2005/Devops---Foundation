@@ -1,208 +1,168 @@
-# 🚀 DevOps Git Branch Workflow (dev → qa → main)
+                                  # 🚀 DevOps Git Branch Workflow (dev → qa → main)
 
-This project demonstrates a basic **Git branching strategy** used in real DevOps environments, including:
 
-* Repository setup
-* Branch creation (main, dev, qa)
-* Working in dev branch
-* Pull Request workflow
-* Fetch, Revert, Abort usage
+# This project demonstrates a basic **Git branching strategy** used in real DevOps environments, including:
 
----
+          * Repository setup
+          * Branch creation (main, dev, qa)
+          * Working in dev branch
+          * Pull Request workflow
+          * Fetch, Revert, Abort usage
+          
 
-## 📁 Branch Strategy
+# Branch Strategy
 
-```
-main → Production
-qa   → Testing
-dev  → Development
-```
+          main → Production
+          qa   → Testing
+          dev  → Development
 
-Workflow:
+   ## Workflow:
 
-```
-dev → qa → main
-```
+          dev → qa → main
 
----
 
-## ⚙️ Initial Setup
+# STEP:1 Initial Setup
 
-### Configure Git identity
+   ## Configure Git identity
 
-```bash
-git config --global user.name "Your Name"
-git config --global user.email "your-email@gmail.com"
-```
+         git config --global user.name "Your Name"
+         git config --global user.email "your-email@gmail.com"
 
-### Initialize repository
+   ## Initialize repository
 
-```bash
-git init
-git remote add origin <repo-url>
-```
+         git init
+         git remote add origin <repo-url>
 
----
 
-## 🌿 Create Branches
+# STEP:2 Create Branches
 
-Create main:
+   ## Create main:
 
-```bash
-git branch -M main
-git push -u origin main
-```
+         git branch -M main
+         git push -u origin main
 
-Create dev:
 
-```bash
-git checkout -b dev
-git push -u origin dev
-```
+   ## Create dev:
 
-Create qa:
+         git checkout -b dev
+         git push -u origin dev
 
-```bash
-git checkout main
-git checkout -b qa
-git push -u origin qa
-```
 
----
+   ## Create qa:
 
-## 💻 Working in dev Branch
+         git checkout main
+         git checkout -b qa
+         git push -u origin qa
 
-Switch to dev:
 
-```bash
-git checkout dev
-```
+# STEP:3 Working in dev Branch
 
-Make changes:
+   ## Switch to dev:
 
-```bash
-git add .
-git commit -m "Update README"
-git push
-```
+         git checkout dev
 
----
+ 
+   ### Make changes:
 
-## 🔁 Merge Workflow
 
-### dev → qa
+         git add .
+         git commit -m "Update README"
+         git push
 
-```bash
-git checkout qa
-git merge dev
-git push
-```
 
-### qa → main
+   ## Merge Workflow
 
-```bash
-git checkout main
-git merge qa
-git push
-```
+    ### dev → qa
 
----
+        git checkout qa
+        git merge dev
+        git push
 
-## 📥 Git Fetch
+    ### qa → main
 
-Fetch downloads changes without merging.
+        git checkout main
+        git merge qa
+        git push
 
-```bash
-git fetch
-git fetch origin dev
-```
 
-Used for:
+# STEP:4 Git Fetch
 
-* Checking updates
-* CI/CD pipelines
-* Avoiding conflicts
+    Fetch downloads changes without merging.
 
----
+        git fetch
+        git fetch origin dev
 
-## ↩️ Git Revert (Safe Rollback)
 
-Revert creates a new commit that undoes a previous commit.
+     Used for:
 
-```bash
-git revert <commit-id>
-```
+          * Checking updates
+          * CI/CD pipelines
+          * Avoiding conflicts
 
-Revert last commit:
 
-```bash
-git revert HEAD --no-edit
-```
+# STEP:5 Git Revert (Safe Rollback)
 
-Use cases:
+      Revert creates a new commit that undoes a previous commit.
 
-* Production bug
-* Wrong commit pushed
-* Safe rollback
+                git revert <commit-id>
 
----
+      Revert last commit:
 
-## 🛑 Git Abort (Cancel Operation)
+               git revert HEAD --no-edit
 
-Abort cancels an ongoing merge or rebase.
 
-Merge abort:
+      Use cases:
 
-```bash
-git merge --abort
-```
+            * Production bug
+            * Wrong commit pushed
+            * Safe rollback
 
-Rebase abort:
 
-```bash
-git rebase --abort
-```
+# STEP:6 Git Abort (Cancel Operation)
 
-Used when:
+    Abort cancels an ongoing merge or rebase.
 
-* Merge conflict messy
-* Release issues
-* CI/CD failures
+      Merge abort:
+
+          git merge --abort
+
+      Rebase abort:
+
+        git rebase --abort
+
+  Used when:
+
+       * Merge conflict messy
+       * Release issues
+       * CI/CD failures
 
 Abort does not affect GitHub.
 
----
+# STEP:7 Useful Commands
 
-## 🔎 Useful Commands
+   ## Check branch:
 
-Check branch:
+            git branch
 
-```bash
-git branch
-```
 
-Check status:
+   ## Check status:
 
-```bash
-git status
-```
+            git status
 
-View history:
 
-```bash
-git log --oneline
-```
+   ## View history:
 
-Pull latest:
+             git log --oneline
 
-```bash
-git pull
-```
 
-Push changes:
+   ## Pull latest:
 
-```bash
-git push
-```
+             git pull
+
+
+   ## Push changes:
+
+             git push
+
 
 
