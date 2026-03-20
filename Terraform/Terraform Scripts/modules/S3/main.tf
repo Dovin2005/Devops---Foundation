@@ -1,7 +1,7 @@
-resource "aws_s3_bucket" "ec2_logs" {
+resource "aws_s3_bucket" "bucket" {
   bucket = var.bucket_name
 
   tags = {
-    Name = "ec2-log-bucket"
+    Name = "${var.project_name}-${var.environment}-logs"
   }
 }
