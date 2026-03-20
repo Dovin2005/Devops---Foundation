@@ -1,23 +1,17 @@
-variable "vpc_cidr" {
-  type = string
-}
+variable "vpc_cidr" {}
 
-variable "public_subnet_cidr" {
-  type = string
-}
+variable "public_subnet_cidr" {}
 
-variable "private_subnet_1_cidr" {
-  type = string
-}
+variable "public_subnet_2_cidr" {}
 
-variable "private_subnet_2_cidr" {
-  type = string
-}
+variable "private_subnet_1_cidr" {}
 
-variable "availability_zone_1" {
-  type = string
-}
+variable "private_subnet_2_cidr" {}
 
-variable "availability_zone_2" {
-  type = string
-}
+variable "availability_zone_1" {}
+
+variable "availability_zone_2" {}
+
+variable "project_name" {}
+
+variable "environment" {}
