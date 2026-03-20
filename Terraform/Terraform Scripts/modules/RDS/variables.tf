@@ -1,48 +1,13 @@
-variable "vpc_id" {
-  type = string
-}
+variable "vpc_id" {}
 
-variable "subnet_ids" {
-  type = list(string)
-}
+variable "subnet_ids" {}
 
-variable "rds_sg_name" {
-  type = string
-}
+variable "db_username" {}
 
-variable "db_subnet_group_name" {
-  type = string
-}
+variable "db_password" {}
 
-variable "db_identifier" {
-  type = string
-}
+variable "ec2_security_group_id" {}
 
-variable "db_name" {
-  type = string
-}
+variable "project_name" {}
 
-variable "db_username" {
-  type = string
-}
-
-variable "db_password" {
-  type      = string
-  sensitive = true
-}
-
-variable "db_port" {
-  type = number
-}
-
-variable "db_instance_class" {
-  type = string
-}
-
-variable "db_allocated_storage" {
-  type = number
-}
-
-variable "ec2_security_group_id" {
-  type = string
-}
+variable "environment" {}
