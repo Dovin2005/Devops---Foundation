@@ -1,31 +1,17 @@
-variable "subnet_ids" {
-  type = list(string)
-}
+variable "subnet_ids" {}
 
-variable "target_group_arn" {
-  type = string
-}
+variable "target_group_arn" {}
 
-variable "ami_id" {
-  type = string
-}
+variable "ami_id" {}
 
-variable "instance_type" {
-  type = string
-}
+variable "instance_type" {}
 
-variable "key_name" {
-  type = string
-}
+variable "key_name" {}
 
-variable "instance_profile" {
-  type = string
-}
+variable "instance_profile" {}
 
-variable "security_group_id" {
-  type = string
-}
+variable "security_group_id" {}
 
-variable "instance_name" {
-  type = string
-}
+variable "project_name" {}
+
+variable "environment" {}
