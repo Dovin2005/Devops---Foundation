@@ -1,1 +1,17 @@
+- name: Install app packages
+  apt:
+    name: "{{ app_packages }}"
+    state: present
+    update_cache: yes
 
+- name: Start Docker
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Start Nginx
+  service:
+    name: nginx
+    state: started
+    enabled: yes
