@@ -12,3 +12,13 @@ resource "aws_iam_role" "role" {
 resource "aws_iam_instance_profile" "profile" {
   role = aws_iam_role.role.name
 }
+
+resource "aws_iam_role_policy_attachment" "cw_logs" {
+  role       = aws_iam_role.role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "s3_access" {
+  role       = aws_iam_role.role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
