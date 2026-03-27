@@ -1,0 +1,17 @@
+plugin: amazon.aws.aws_ec2
+
+regions:
+  - ap-south-1
+
+filters:
+  instance-state-name: running
+
+hostnames:
+  - ip-address
+
+compose:
+  ansible_host: public_ip_address
+
+groups:
+  app: "'asg' in ec2_tags.Name"
+  monitoring: "'monitor' in ec2_tags.Name"
