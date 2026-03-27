@@ -1,1 +1,5 @@
-
+app_packages:
+  - docker.io
+  - nginx
+  - nodejs
+  - npm
