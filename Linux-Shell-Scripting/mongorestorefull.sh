@@ -3,7 +3,7 @@
 # ===== CONFIG =====
 NEW_MONGO_URI=""
 
-BACKUP_DIR="/mnt/nikil/"
+BACKUP_DIR="/mnt/"
 
 echo "===== Mongo Restore Started at $(date) ====="
 
