@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # ===== CONFIG =====
-MONGO_URI="mongodb+srv://zohobook:bEuNkmmn3W5a09oX@zohobook.bgqlqdy.mongodb.net"
-BACKUP_DIR="/mnt/nikil/zohobook"
+MONGO_URI=""
+BACKUP_DIR="/mnt/nikil"
 
 # Databases list
 DATABASES=(
