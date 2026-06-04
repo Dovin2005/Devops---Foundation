@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ===== CONFIG =====
-NEW_MONGO_URI="mongodb+srv://dgtroot:Dreams123456@dreams-mongo.global.mongocluster.cosmos.azure.com"
+NEW_MONGO_URI=""
 
 BACKUP_DIR="/mnt/nikil/zohobook"
 
