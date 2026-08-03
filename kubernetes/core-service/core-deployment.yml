@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core-service
+  namespace: ucc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: core-service
+  template:
+    metadata:
+      labels:
+        app: core-service
+    spec:
+      containers:
+        - name: core-service
+          image: 034384198565.dkr.ecr.ap-south-1.amazonaws.com/ucc-project:core-v1
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 5003
+
+          env:
+            - name: PORT
+              value: "5003"
+
+          envFrom:
+            - secretRef:
+                name: ucc-secret
+            - configMapRef:
+                name: ucc-config

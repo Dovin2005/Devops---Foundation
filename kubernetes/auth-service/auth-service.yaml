@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: ucc
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - name: http
+      protocol: TCP
+      port: 5002
+      targetPort: 5002
+  type: ClusterIP

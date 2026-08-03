@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: ucc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+        - name: notification-service
+          image: 034384198565.dkr.ecr.ap-south-1.amazonaws.com/ucc-project:notification-v1
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 5009
+
+          env:
+            - name: PORT
+              value: "5009"
+
+          envFrom:
+            - secretRef:
+                name: ucc-secret
+            - configMapRef:
+                name: ucc-config

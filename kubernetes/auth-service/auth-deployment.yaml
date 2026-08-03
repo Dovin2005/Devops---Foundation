@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: ucc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: 034384198565.dkr.ecr.ap-south-1.amazonaws.com/ucc-project:auth-v2
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 5002
+
+          env:
+            - name: PORT
+              value: "5002"
+
+          envFrom:
+            - secretRef:
+                name: ucc-secret
+            - configMapRef:
+                name: ucc-config

@@ -1,0 +1,123 @@
+x-common-env: &common-env
+  NODE_ENV: ${NODE_ENV:-development}
+  AUTH_SERVICE_NAME: ${AUTH_SERVICE_NAME}
+  AUTH_SERVICE_PORT: ${AUTH_SERVICE_PORT}
+  CORE_SERVICE_NAME: ${CORE_SERVICE_NAME}
+  CORE_SERVICE_PORT: ${CORE_SERVICE_PORT}
+  BILLING_SERVICE_NAME: ${BILLING_SERVICE_NAME}
+  BILLING_SERVICE_PORT: ${BILLING_SERVICE_PORT}
+  SUPERADMIN_SERVICE_NAME: ${SUPERADMIN_SERVICE_NAME}
+  SUPERADMIN_SERVICE_PORT: ${SUPERADMIN_SERVICE_PORT}
+  NOTIFICATION_SERVICE_NAME: ${NOTIFICATION_SERVICE_NAME}
+  NOTIFICATION_SERVICE_PORT: ${NOTIFICATION_SERVICE_PORT}
+
+services:
+  ucc-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ucc
+      POSTGRES_PASSWORD: ucc
+      POSTGRES_DB: ucc
+    ports: ['5430:5432']
+    volumes: ['./pgdata:/var/lib/postgresql/data']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ucc']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ucc-kong:
+    image: kong:3.7
+    depends_on: [ucc-auth-service]
+    environment:
+      KONG_DATABASE: 'off'
+      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
+      KONG_PROXY_LISTEN: '0.0.0.0:8000'
+      KONG_ADMIN_LISTEN: '0.0.0.0:8001'
+    volumes: ['./:/kong:ro']
+    ports: ['5000:8000', '5001:8001']
+
+  ucc-auth-service:
+    build: { context: .., dockerfile: services/auth-service/Dockerfile }
+    depends_on: { ucc-postgres: { condition: service_healthy } }
+    env_file:
+      - .env
+    environment:
+      <<: *common-env
+      SERVICE_NAME: ${AUTH_SERVICE_NAME}
+      PORT: ${AUTH_SERVICE_PORT}
+      DATABASE_URL: ${DATABASE_URL}?schema=public${DATABASE_URL_EXTRA:-}
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET}
+      ENCRYPTION_MASTER_KEY: ${ENCRYPTION_MASTER_KEY}
+      CORE_URL: http://${CORE_SERVICE_NAME}:${CORE_SERVICE_PORT}
+      COMMS_URL: http://${NOTIFICATION_SERVICE_NAME}:${NOTIFICATION_SERVICE_PORT}
+    ports: ['${AUTH_SERVICE_PORT:-4001}:${AUTH_SERVICE_PORT:-4001}']
+    healthcheck:
+      test: ['CMD', 'node', '-e', "require('http').get('http://localhost:' + process.env.PORT + '/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  ucc-core-service:
+    build: { context: .., dockerfile: services/core-service/Dockerfile }
+    depends_on: { ucc-postgres: { condition: service_healthy } }
+    env_file:
+      - .env
+    environment:
+      <<: *common-env
+      SERVICE_NAME: ${CORE_SERVICE_NAME}
+      PORT: ${CORE_SERVICE_PORT}
+      DATABASE_URL: ${DATABASE_URL}?schema=public${DATABASE_URL_EXTRA:-}
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET}
+      AUTH_URL: http://${AUTH_SERVICE_NAME}:${AUTH_SERVICE_PORT}
+      BILLING_URL: http://${BILLING_SERVICE_NAME}:${BILLING_SERVICE_PORT}
+    ports: ['${CORE_SERVICE_PORT:-4002}:${CORE_SERVICE_PORT:-4002}']
+
+  ucc-billing-service:
+    build: { context: .., dockerfile: services/billing-service/Dockerfile }
+    depends_on: { ucc-postgres: { condition: service_healthy } }
+    env_file:
+      - .env
+    environment:
+      <<: *common-env
+      SERVICE_NAME: ${BILLING_SERVICE_NAME}
+      PORT: ${BILLING_SERVICE_PORT}
+      DATABASE_URL: ${DATABASE_URL}?schema=public${DATABASE_URL_EXTRA:-}
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      AUTH_URL: http://${AUTH_SERVICE_NAME}:${AUTH_SERVICE_PORT}
+    ports: ['${BILLING_SERVICE_PORT:-4004}:${BILLING_SERVICE_PORT:-4004}']
+
+  ucc-superadmin-service:
+    build: { context: .., dockerfile: services/superadmin-service/Dockerfile }
+    depends_on: { ucc-postgres: { condition: service_healthy }, ucc-auth-service: { condition: service_healthy } }
+    env_file:
+      - .env
+    environment:
+      <<: *common-env
+      SERVICE_NAME: ${SUPERADMIN_SERVICE_NAME}
+      PORT: ${SUPERADMIN_SERVICE_PORT}
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET}
+      AUTH_URL: http://${AUTH_SERVICE_NAME}:${AUTH_SERVICE_PORT}
+    ports: ['${SUPERADMIN_SERVICE_PORT:-4007}:${SUPERADMIN_SERVICE_PORT:-4007}']
+
+  ucc-notification-service:
+    build: { context: .., dockerfile: services/notification-service/Dockerfile }
+    depends_on: { ucc-postgres: { condition: service_healthy }, ucc-auth-service: { condition: service_healthy } }
+    env_file:
+      - .env
+    environment:
+      <<: *common-env
+      SERVICE_NAME: ${NOTIFICATION_SERVICE_NAME}
+      PORT: ${NOTIFICATION_SERVICE_PORT}
+      DATABASE_URL: ${DATABASE_URL}?schema=public${DATABASE_URL_EXTRA:-}
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET}
+      AUTH_URL: http://${AUTH_SERVICE_NAME}:${AUTH_SERVICE_PORT}
+    ports: ['${NOTIFICATION_SERVICE_PORT:-4008}:${NOTIFICATION_SERVICE_PORT:-4008}']

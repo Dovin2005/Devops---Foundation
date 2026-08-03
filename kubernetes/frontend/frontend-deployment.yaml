@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: ucc
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: frontend
+
+  template:
+    metadata:
+      labels:
+        app: frontend
+
+    spec:
+      containers:
+        - name: frontend
+          image: 034384198565.dkr.ecr.ap-south-1.amazonaws.com/ucc-project:frontend-v1
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 80

@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: billing-service
+  namespace: ucc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: billing-service
+  template:
+    metadata:
+      labels:
+        app: billing-service
+    spec:
+      containers:
+        - name: billing-service
+          image: 034384198565.dkr.ecr.ap-south-1.amazonaws.com/ucc-project:billing-v1
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 5008
+
+          env:
+            - name: PORT
+              value: "5008"
+
+          envFrom:
+            - secretRef:
+                name: ucc-secret
+            - configMapRef:
+                name: ucc-config

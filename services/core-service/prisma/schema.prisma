@@ -1,0 +1,179 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../src/generated/prisma"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Guest-first booking wizard: consultation option → date/time + doctor →
+// intake → payment (Stripe pre-auth, charged when the visit starts) → confirmed.
+// Slot held 10 min; guest bookings create a shadow patient linked on account
+// creation; registered patients book with just the appointment details.
+model Booking {
+  id            String   @id @default(uuid()) @db.Uuid
+  guestFlag     Boolean  @default(false)
+  guestEmail    String?  @db.VarChar(255)
+  guestPhone    String?  @db.VarChar(40)
+  patientId     String?  @db.Uuid // set for member bookings; linked later for guests
+  serviceCode   String   @db.VarChar(32)
+  modality      String   @db.VarChar(20)
+  city          String?  @db.VarChar(60)
+  providerId    String?  @db.Uuid // null = next available
+  slotStart     DateTime @db.Timestamptz
+  persons       Json     @default("[]")
+  amountUsd     Decimal  @default(0) @db.Decimal(10, 2) // price snapshot by modality
+  currency      String   @default("usd") @db.VarChar(8) // usd | cop (charged at TRM)
+  intakeData    Json?    // intake answers held until payment confirms and the case is created
+  preauthRef    String?  @db.VarChar(64) // Stripe PaymentIntent id
+  preauthStatus String   @default("none") @db.VarChar(16) // none | approved | declined
+  // Stripe Customer created for this guest's payment (guests have no `users`
+  // row). Carried forward onto their account if they later register with the
+  // same email — see auth-service auth.service.ts#register.
+  guestStripeCustomerId String? @db.VarChar(64)
+  intakeStatus  String   @default("pending") @db.VarChar(16) // pending | complete | incomplete
+  status        String   @default("held") @db.VarChar(16) // held | confirmed | expired | cancelled
+  heldUntil     DateTime @db.Timestamptz
+  number        String?  @db.VarChar(24) // UCC-#### on confirmation
+  createdAt     DateTime @default(now()) @db.Timestamptz
+  updatedAt     DateTime @updatedAt @db.Timestamptz
+
+  @@index([status])
+  @@index([guestEmail])
+  @@index([patientId])
+  @@map("bookings")
+}
+
+// A case tracks one person's journey through the 12 stages. TypeORM used
+// `CaseEntity` because `Case` clashes with SQL; the Prisma model can just be
+// `Case` and map to the same table.
+model Case {
+  id            String   @id @default(uuid()) @db.Uuid
+  bookingId     String   @db.Uuid
+  patientId     String?  @db.Uuid
+  providerId    String?  @db.Uuid
+  coordinatorId String?  @db.Uuid
+  modality      String   @db.VarChar(20)
+  serviceCode   String   @db.VarChar(32)
+  reason        String?  @db.VarChar(300)
+  status        String   @default("booked") @db.VarChar(32)
+  stage         Int      @default(2) // 1..12
+  createdAt     DateTime @default(now()) @db.Timestamptz
+  updatedAt     DateTime @updatedAt @db.Timestamptz
+
+  @@index([status])
+  @@index([patientId])
+  @@index([providerId])
+  @@map("cases")
+}
+
+// Immutable consent rows (UCC_19 §A4). Withdrawal is a new row, never an update.
+model Consent {
+  id          String   @id @default(uuid()) @db.Uuid
+  bookingId   String?  @db.Uuid
+  caseId      String?  @db.Uuid
+  patientId   String?  @db.Uuid
+  type        String   @db.VarChar(32)
+  version     String   @default("1.0") @db.VarChar(12)
+  signedBy    String   @db.VarChar(160)
+  signerRole  String   @default("patient") @db.VarChar(16)
+  witnessName String?  @db.VarChar(160)
+  signedAt    DateTime @default(now()) @db.Timestamptz
+
+  @@index([bookingId])
+  @@index([caseId])
+  @@index([patientId])
+  @@map("consents")
+}
+
+model Dependent {
+  id                String    @id @default(uuid()) @db.Uuid
+  guardianPatientId String    @db.Uuid
+  firstName         String    @db.VarChar(120)
+  lastName          String    @db.VarChar(120)
+  relationship      String?   @db.VarChar(40)
+  dob               DateTime? @db.Date
+  idType            String?   @db.VarChar(12)
+  idNumber          String?   @db.VarChar(40)
+  createdAt         DateTime  @default(now()) @db.Timestamptz
+
+  @@index([guardianPatientId])
+  @@map("dependents")
+}
+
+// Structured, patient-friendly intake (captured after payment per §A1).
+model Intake {
+  id               String   @id @default(uuid()) @db.Uuid
+  caseId           String   @db.Uuid
+  reason           String   @db.Text
+  goals            String?  @db.Text
+  bodyAreas        String[] @default([])
+  onset            String?  @db.VarChar(12)
+  severity         Int?
+  hasFever         Boolean?
+  takingMedication Boolean?
+  createdAt        DateTime @default(now()) @db.Timestamptz
+
+  @@unique([caseId])
+  @@map("intakes")
+}
+
+// Patient record (FHIR-aligned fields). Guest bookings create a shadow patient
+// linked to the auth user on account creation.
+model Patient {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String?   @db.Uuid
+  firstName        String    @db.VarChar(120)
+  lastName         String    @db.VarChar(120)
+  dob              DateTime? @db.Date
+  sex              String?   @db.VarChar(12)
+  idType           String?   @db.VarChar(12) // CC/CE/TI/PA/PEP-PPT/NIT (D-12)
+  idNumber         String?   @db.VarChar(40)
+  phone            String?   @db.VarChar(40)
+  email            String?   @db.VarChar(255)
+  language         String    @default("es") @db.VarChar(12) // es | en | bilingual
+  addresses        Json      @default("[]")
+  emergencyContact Json?
+  allergies        String[]  @default([])
+  medications      String[]  @default([])
+  conditions       String[]  @default([])
+  marketingConsent Json      @default("{}")
+  suppressed       Boolean   @default(false)
+  createdAt        DateTime  @default(now()) @db.Timestamptz
+  updatedAt        DateTime  @updatedAt @db.Timestamptz
+
+  @@index([userId])
+  @@index([idNumber])
+  @@map("patients")
+}
+
+// Provider directory (physicians/specialists) — powers "Find a doctor" + booking.
+// Per-specialist pricing (UCC_19 §A8). Read-mostly → fronted by a TTL cache.
+model Provider {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String?  @db.Uuid // link to auth-service user
+  firstName        String   @db.VarChar(120)
+  lastName         String   @db.VarChar(120)
+  type             String   @default("GP") @db.VarChar(20) // GP | Specialist
+  // Doctor specialty catalog (Category, owned by auth-service) — plain array
+  // reference, no cross-service FK (same convention as every other
+  // cross-service reference in this codebase). Names are denormalized for
+  // display so the public directory needs no cross-service call to render.
+  specialtyIds     String[] @default([]) @db.Uuid
+  specialtyNames   String[] @default([])
+  city             String?  @db.VarChar(60)
+  consultPriceUsd  Decimal  @default(75) @db.Decimal(10, 2)
+  rating           Decimal  @default(5) @db.Decimal(3, 2)
+  modes            String[] @default([]) // telehealth | in_office | at_home
+  languages        String[] @default([])
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now()) @db.Timestamptz
+
+  @@index([city])
+  @@index([specialtyIds])
+  @@index([active])
+  @@map("providers")
+}

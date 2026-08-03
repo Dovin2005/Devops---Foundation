@@ -1,0 +1,95 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../src/generated/prisma"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Quote {
+  id         String   @id @default(uuid()) @db.Uuid
+  caseId     String   @db.Uuid
+  patientId  String?  @db.Uuid
+  orderIds   String[] @default([])
+  lines      Json     @default("[]")
+  totalUsd   Decimal  @default(0) @db.Decimal(12, 2)
+  totalCop   Decimal  @default(0) @db.Decimal(14, 2)
+  trmRate    Decimal  @default(0) @db.Decimal(10, 2)
+  status     String   @default("draft") @db.VarChar(20)
+  reviewedBy String?  @db.Uuid
+  sentAt     DateTime? @db.Timestamptz
+  createdAt  DateTime @default(now()) @db.Timestamptz
+
+  @@index([caseId])
+  @@index([status])
+  @@map("quotes")
+}
+
+model Invoice {
+  id           String    @id @default(uuid()) @db.Uuid
+  caseId       String?   @db.Uuid
+  patientId    String?   @db.Uuid
+  number       String    @unique @db.VarChar(24)
+  lines        Json      @default("[]")
+  subtotalCop  Decimal   @default(0) @db.Decimal(14, 2)
+  totalCop     Decimal   @default(0) @db.Decimal(14, 2)
+  totalUsd     Decimal   @default(0) @db.Decimal(12, 2)
+  trmRate      Decimal   @default(0) @db.Decimal(10, 2)
+  status       String    @default("issued") @db.VarChar(12)
+  cufe         String?   @db.VarChar(64)
+  paymentId    String?   @db.Uuid
+  paidAt       DateTime? @db.Timestamptz
+  createdAt    DateTime  @default(now()) @db.Timestamptz
+
+  @@index([caseId])
+  @@index([patientId])
+  @@index([status])
+  @@map("invoices")
+}
+
+// Saved Stripe payment methods for a user. `userId` references auth-service's
+// `users.id` — plain column, not a Prisma relation (this repo's services each
+// own their own Prisma schema against one shared `public` database, so
+// cross-service references never declare `@relation`; see Payment.patientId
+// below for the same convention). Ownership is enforced in application code.
+model PaymentMethod {
+  id                    String   @id @default(uuid()) @db.Uuid
+  userId                String   @db.Uuid
+  stripePaymentMethodId String   @unique @db.VarChar(255)
+  brand                 String?  @db.VarChar(50)
+  last4                 String?  @db.VarChar(4)
+  expMonth              Int?     @db.SmallInt
+  expYear               Int?     @db.SmallInt
+  isDefault             Boolean  @default(false)
+  createdAt             DateTime @default(now()) @db.Timestamptz
+  updatedAt             DateTime @updatedAt @db.Timestamptz
+
+  @@index([userId])
+  @@map("payment_methods")
+}
+
+model Payment {
+  id         String   @id @default(uuid()) @db.Uuid
+  caseId     String?  @db.Uuid
+  invoiceId  String?  @db.Uuid
+  quoteId    String?  @db.Uuid
+  bookingId  String?  @db.Uuid
+  patientId  String?  @db.Uuid
+  type       String   @db.VarChar(20)
+  amountCop  Decimal  @db.Decimal(14, 2)
+  amountUsd  Decimal? @db.Decimal(12, 2)
+  currency   String?  @default("usd") @db.VarChar(8)
+  provider   String?  @default("stripe") @db.VarChar(20)
+  gatewayRef String?  @db.VarChar(64)
+  idemKey    String   @unique @db.VarChar(64)
+  status     String   @default("approved") @db.VarChar(12)
+  createdAt  DateTime @default(now()) @db.Timestamptz
+
+  @@index([invoiceId])
+  @@index([quoteId])
+  @@index([bookingId])
+  @@map("payments")
+}
